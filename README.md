@@ -1,8 +1,15 @@
 # Hackathon
-
-➜  hackathon git:(frontend) tree -L 3
-.
 ├── README.md
+├── backend
+│   ├── README.md
+│   ├── file_parser.py
+│   ├── llm_grader.py
+│   ├── main.py
+│   ├── rag.py
+│   └── venv
+│       ├── bin
+│       ├── lib
+│       └── pyvenv.cfg
 └── frontend
     ├── README.md
     ├── index.html
@@ -18,6 +25,7 @@
     │   ├── entities
     │   ├── esbuild
     │   ├── estree-walker
+    │   ├── fsevents
     │   ├── magic-string
     │   ├── nanoid
     │   ├── picocolors
