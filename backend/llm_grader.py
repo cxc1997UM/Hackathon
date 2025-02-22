@@ -1,24 +1,25 @@
 # llm_grader.py
 import os
 import json
-import openai
 from typing import Dict
-from rag import RAGEngine  # Make sure rag.py is in the same project, or installed as a package
+from openai import OpenAI
+from rag import RAGEngine
 
 class LLMGrader:
     """
-    LLMGrader uses an LLM (OpenAI GPT) to assign a numeric grade and provide feedback,
-    using professor-specific style examples retrieved via RAGEngine.
+    LLMGrader uses an LLM to grade homework assignments based on professor's rubrics 
+    and grading style examples.
     """
 
     def __init__(self,
                  openai_api_key: str = None,
                  rag_engine: RAGEngine = None,
-                 model: str = "gpt-o4-mini"):
+                 model: str = "gpt-4o-mini"):
         """
-        :param openai_api_key: API key for OpenAI.
-        :param rag_engine: A RAGEngine instance for retrieving professor style examples.
-        :param model: The OpenAI Chat model to use (e.g., gpt-3.5-turbo, gpt-4).
+        Initialize the homework grading system.
+        :param openai_api_key: API key for OpenAI
+        :param rag_engine: RAGEngine instance for retrieving rubrics and grading examples
+        :param model: The OpenAI model to use
         """
         self.openai_api_key = openai_api_key or os.getenv("OPENAI_API_KEY")
         self.rag_engine = rag_engine
@@ -26,76 +27,79 @@ class LLMGrader:
 
         if not self.openai_api_key:
             raise ValueError("OpenAI API key not provided or found in the environment.")
-        openai.api_key = self.openai_api_key
+        
+        self.client = OpenAI(api_key=self.openai_api_key)
 
         if not self.rag_engine:
             raise ValueError("RAGEngine instance not provided.")
 
-    def grade_submission(self, assignment_text: str) -> Dict[str, str]:
+    def grade_submission(self, homework_text: str) -> Dict[str, str]:
         """
-        Grades the given assignment text, returning a JSON-like dict:
-        {
-            "score": <numeric score 0-100 or letter>,
-            "feedback": <short textual feedback>
-        }
+        Grade a homework submission using the professor's rubric and style.
+        Returns score and detailed academic feedback.
         """
-        # 1. Retrieve top style examples from the RAG engine
-        similar_examples = self.rag_engine.get_similar_grading_examples(assignment_text, top_k=2)
+        # Get relevant rubrics and grading examples
+        examples = self.rag_engine.get_similar_grading_examples(homework_text, top_k=2)
 
-        # 2. Build prompt, injecting style examples
+        # Build prompt with rubric and examples
         examples_str = ""
-        for ex in similar_examples:
-            # Each ex is a dict like: {"text": "...", "similarity": 0.8, "filepath": "..."}
-            # For the prompt, we only need ex["text"] or a curated excerpt.
-            examples_str += f"\n--- Professor Style Example ---\n{ex['text']}\n"
+        for ex in examples:
+            examples_str += f"\n--- Grading Example/Rubric ---\n{ex['text']}\n"
 
-        user_prompt = f"""
-You are an AI that grades student assignments in the professor's style.
-Below are examples of how the professor typically grades (rubrics, point distribution, feedback style):
+        grading_prompt = f"""
+You are an AI teaching assistant helping a professor grade homework assignments.
+Use these rubrics and past grading examples as reference:
 {examples_str}
 
----
-Now grade the following student submission. Provide:
-1) A numeric score from 0-100
-2) A brief feedback paragraph explaining the rationale behind the score.
+Grade this homework submission following these guidelines:
+1. Assign points based on the rubric criteria
+2. Provide specific feedback on:
+   - What was done correctly
+   - What needs improvement
+   - Any conceptual misunderstandings
+3. Include suggestions for improvement
+4. Keep feedback constructive and educational
 
-Return the result ONLY as valid JSON, in the format:
+Return ONLY valid JSON in this format:
 {{
-  "score": 95,
-  "feedback": "Your explanation is clear, but you missed a key part on data structures."
+  "score": <numeric score 0-100>,
+  "feedback": "Detailed academic feedback here"
 }}
 
----
-Student submission:
-{assignment_text}
-        """
+Homework submission to grade:
+{homework_text}
+"""
 
-        # 3. Call the OpenAI Chat Completion API
-        response = openai.ChatCompletion.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": "You are a helpful assignment grader. Output valid JSON only."},
-                {"role": "user", "content": user_prompt.strip()}
-            ],
-            temperature=0.2,
-            max_tokens=800
-        )
-        
-        assistant_message = response["choices"][0]["message"]["content"].strip()
-
-        # 4. Attempt to parse as JSON
         try:
-            result = json.loads(assistant_message)
-            score = result.get("score", None)
-            feedback = result.get("feedback", "")
-            # In case of partial or missing fields, handle defaults:
-            return {
-                "score": score if score is not None else "N/A",
-                "feedback": feedback
-            }
-        except json.JSONDecodeError:
-            # Fallback if LLM output isn't valid JSON
+            # Call OpenAI with academic grading focus
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "You are an experienced teaching assistant helping grade homework assignments."},
+                    {"role": "user", "content": grading_prompt.strip()}
+                ],
+                temperature=0.3,  # Lower temperature for more consistent grading
+                max_tokens=1000   # Increased for detailed feedback
+            )
+            
+            assistant_message = response.choices[0].message.content.strip()
+
+            try:
+                result = json.loads(assistant_message)
+                return {
+                    "score": result.get("score", "N/A"),
+                    "feedback": result.get("feedback", "Unable to generate feedback.")
+                }
+            except json.JSONDecodeError:
+                print(f"Error parsing LLM response: {assistant_message}")
+                return {
+                    "score": "N/A",
+                    "feedback": "Error: Unable to parse grading response. Please check the format."
+                }
+                
+        except Exception as e:
+            print(f"Error during grading: {str(e)}")
             return {
                 "score": "N/A",
-                "feedback": "Unable to parse LLM response as JSON. Check the logs."
+                "feedback": f"Grading error: {str(e)}"
             }
