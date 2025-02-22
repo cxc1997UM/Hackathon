@@ -51,37 +51,61 @@ export default {
     handleResumeFile(e) {
       this.resumeFile = e.target.files[0];
     },
-    uploadRagFile() {
+    async uploadRagFile() {
       if (!this.ragFile) {
         alert("Please select a file for grading examples.");
         return;
       }
-      alert(`RAG file "${this.ragFile.name}" uploaded!`);
-      // Replace with actual API call to your FastAPI backend
+      const formData = new FormData();
+      formData.append("file", this.ragFile);
+
+      try {
+        const response = await fetch("/upload-professor-example", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await response.json();
+        alert(data.message); // Expecting a message like: "Professor example 'filename' uploaded successfully!"
+      } catch (error) {
+        console.error("Error uploading professor example:", error);
+        alert("Failed to upload professor example.");
+      }
     },
-    uploadResumeFile() {
+    async uploadResumeFile() {
       if (!this.resumeFile) {
         alert("Please select a resume file to upload.");
         return;
       }
-      alert(`Resume file "${this.resumeFile.name}" uploaded!`);
-      // Replace with actual API call to your FastAPI backend
+      const formData = new FormData();
+      formData.append("file", this.resumeFile);
+
+      try {
+        const response = await fetch("/grade", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await response.json();
+        alert(`Grading complete!\nScore: ${data.score}\nFeedback: ${data.feedback}`);
+      } catch (error) {
+        console.error("Error grading resume:", error);
+        alert("Failed to grade resume.");
+      }
     },
   },
 };
 </script>
 
 <style>
-/* Remove "scoped" so these styles can apply globally */
+/* Global styles */
 :root {
   --primary-color: #AEDFF7;  /* Pastel blue */
-  --secondary-color:rgb(255, 255, 255); /* White */
+  --secondary-color: rgb(255, 255, 255); /* White */
   --accent-color: #FF4444;    /* Red accent */
   --text-color: #333333;
   --font-family: 'Helvetica Neue', Arial, sans-serif;
 }
 
-/* Apply white background and standard text color to the body */
+/* Body styling */
 body {
   background-color: var(--secondary-color);
   color: var(--text-color);
@@ -89,11 +113,13 @@ body {
   font-family: var(--font-family);
 }
 
+/* Homepage styling */
 .homepage {
   text-align: center;
   padding: 2rem;
 }
 
+/* Upload container layout */
 .upload-container {
   display: flex;
   justify-content: center;
@@ -102,44 +128,45 @@ body {
   margin-top: 2rem;
 }
 
-/* RAG Upload Box: left-indented and smaller */
+/* RAG Upload Box styling */
 .rag-upload {
   width: 30%;
-  background-color: var(--primary-color); /* Pastel blue box */
+  background-color: var(--primary-color);
   padding: 1.5rem;
   border-radius: 8px;
-  color: var(--secondary-color);          /* White text inside the box */
+  color: var(--secondary-color);
   text-align: left;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Resume Upload Box: larger and centered */
+/* Resume Upload Box styling */
 .resume-upload {
   width: 50%;
-  background-color: var(--primary-color); /* Pastel blue box */
+  background-color: var(--primary-color);
   padding: 1.5rem;
   border-radius: 8px;
-  color: var(--secondary-color);          /* White text inside the box */
+  color: var(--secondary-color);
   text-align: left;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Input and button styling */
 input[type="file"] {
   display: block;
   margin-bottom: 1rem;
 }
 
 button {
-  background-color: var(--accent-color); /* Red accent */
+  background-color: var(--accent-color);
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 4px;
-  color: var(--secondary-color);         /* White text on button */
+  color: var(--secondary-color);
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
 
 button:hover {
-  background-color: #e03d3d; /* Slightly darker red on hover */
+  background-color: #e03d3d;
 }
 </style>
