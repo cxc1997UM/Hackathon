@@ -1,4 +1,6 @@
 fastapi
+flask
+flask-cors
 uvicorn[standard]
 openai
 python-dotenv
@@ -6,4 +8,4 @@ numpy
 beautifulsoup4
 PyMuPDF
 python-docx
-
+python-multipart
