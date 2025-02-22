@@ -6,6 +6,6 @@ openai
 python-dotenv
 numpy
 beautifulsoup4
-PyMuPDF
+pdfminer.six
 python-docx
 python-multipart

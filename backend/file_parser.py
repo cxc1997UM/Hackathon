@@ -1,6 +1,5 @@
 # file_parser.py
-
-import fitz  # PyMuPDF
+from pdfminer.high_level import extract_text  # Replace fitz with pdfminer
 from docx import Document  # python-docx package
 from bs4 import BeautifulSoup
 from pathlib import Path
@@ -13,25 +12,22 @@ def parse_file(file_path: Path) -> str:
     """
     suffix = file_path.suffix.lower()
     if suffix == ".pdf":
-        return _extract_text_from_pdf(file_path)
+        return extract_text_from_pdf(file_path)
     elif suffix == ".docx":
-        return _extract_text_from_docx(file_path)
+        return extract_text_from_docx(file_path)
     elif suffix in [".html", ".htm"]:
-        return _extract_text_from_html(file_path)
+        return extract_text_from_html(file_path)
     else:  # txt or other text formats
-        return _extract_text_from_txt(file_path)
+        return extract_text_from_txt(file_path)
 
-def _extract_text_from_pdf(file_path: Path) -> str:
+def extract_text_from_pdf(file_path: Path) -> str:
     """
-    Extract text from PDF using PyMuPDF (fitz).
+    Extract text from PDF using pdfminer.six.
     """
-    doc = fitz.open(file_path)
-    text = []
-    for page in doc:
-        text.append(page.get_text())
-    return "\n".join(text)
+    # PDFMiner's extract_text handles file opening and text extraction
+    return extract_text(str(file_path))
 
-def _extract_text_from_docx(file_path: Path) -> str:
+def extract_text_from_docx(file_path: Path) -> str:
     """
     Extract text from a DOCX file using python-docx.
     """
@@ -39,7 +35,7 @@ def _extract_text_from_docx(file_path: Path) -> str:
     # Join all paragraphs with line breaks
     return "\n".join(p.text for p in doc.paragraphs)
 
-def _extract_text_from_html(file_path: Path) -> str:
+def extract_text_from_html(file_path: Path) -> str:
     """
     Extract text from an HTML file using BeautifulSoup.
     """
@@ -47,7 +43,7 @@ def _extract_text_from_html(file_path: Path) -> str:
         soup = BeautifulSoup(f.read(), 'html.parser')
         return soup.get_text()
 
-def _extract_text_from_txt(file_path: Path) -> str:
+def extract_text_from_txt(file_path: Path) -> str:
     """
     Extract text from a plain text file or unsupported extension,
     falling back to reading it as .txt.
