@@ -39,8 +39,8 @@ The system consists of two main components:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/igrade-ai.git
-cd igrade-ai/backend
+git clone https://github.com/cxc1997UM/Hackathon.git
+cd Hackathon/backend
 
 # Create and activate virtual environment
 python -m venv venv
@@ -130,8 +130,7 @@ The frontend will be available at `http://localhost:5173`
 ```plaintext
 POST /upload-professor-example
 - Upload rubrics or graded examples
-- Multipart form data with file
-
+- Multipart form data Hackathon
 POST /grade
 - Upload student homework for grading
 - Multipart form data with file
@@ -184,7 +183,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For support, please:
 1. Check the [FAQ](docs/FAQ.md)
-2. Search existing [Issues](https://github.com/yourusername/igrade-ai/issues)
+2. Search existing [Issues](https://github.com/cxc1997UM/Hackathon/issues)
 3. Create a new issue if needed
 
 ## Acknowledgments
